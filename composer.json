@@ -1,0 +1,36 @@
+{
+	"name": "willherzog/symfony-item-options-bundle",
+	"description": "A bundle to provide item option functionality for Doctrine entities within the Symfony framework.",
+    "type": "symfony-bundle",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Will Herzog",
+            "email": "willherzog@gmail.com"
+        }
+    ],
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "https://github.com/willherzog/php-util"
+		},
+		{
+			"type": "vcs",
+			"url": "https://github.com/willherzog/doctrine-generic"
+		}
+	],
+    "require": {
+		"php": "^8.2",
+        "doctrine/doctrine-bundle": "^2.7.1",
+		"symfony/event-dispatcher": "^6.2",
+		"symfony/form": "^6.2",
+		"symfony/framework-bundle": "^6.2",
+		"symfony/options-resolver": "^6.2",
+		"symfony/yaml": "^6.2",
+        "willherzog/doctrine-generic": "dev-main",
+		"willherzog/php-util": "dev-main"
+	},
+    "autoload": {
+        "psr-4": { "WHSymfony\\WHItemOptionsBundle\\": "src/" }
+    }
+}
