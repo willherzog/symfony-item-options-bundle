@@ -11,17 +11,22 @@ use WHPHP\Util\ArrayUtil;
  *
  * @author Will Herzog <willherzog@gmail.com>
  */
-class ItemOptionDefinitionBag implements GenericBag
+abstract class ItemOptionDefinitionBag implements GenericBag
 {
-	protected array $definitions = [];
+	private array $definitions = [];
 
-	public function __construct(array $definitions)
+	abstract protected function getOptionDefinitions(): array;
+
+	final public function __construct()
 	{
-		if( !ArrayUtil::isAssociative($definitions) ) {
-			throw new \InvalidArgumentException('The $definitions argument must be an associated array.');
-		}
+		$definitions = $this->getOptionDefinitions();
 
 		foreach( $definitions as $name => $definition ) {
+			if( is_string($definition) && !is_string($name) ) {
+				$name = $definition;
+				$definition = [];
+			}
+
 			if( !($definition instanceof ItemOptionDefinition) ) {
 				if( !is_array($definition) ) {
 					throw new \InvalidArgumentException(sprintf('All elements of the $definitions argument must either be instances of %s or arrays themselves.', ItemOptionDefinition::class));
@@ -37,7 +42,7 @@ class ItemOptionDefinitionBag implements GenericBag
 	/**
 	 * @inheritDoc
 	 */
-	public function add(string $name, mixed $definition): bool
+	final public function add(string $name, mixed $definition): bool
 	{
 		if( !is_object($definition) || !($definition instanceof ItemOptionDefinition) ) {
 			throw new InvalidArgumentTypeException($definition, ItemOptionDefinition::class);
@@ -55,7 +60,7 @@ class ItemOptionDefinitionBag implements GenericBag
 	/**
 	 * @inheritDoc
 	 */
-	public function remove(string $name): bool
+	final public function remove(string $name): bool
 	{
 		if( isset($this->definitions[$name]) ) {
 			unset($this->definitions[$name]);
@@ -69,7 +74,7 @@ class ItemOptionDefinitionBag implements GenericBag
 	/**
 	 * @inheritDoc
 	 */
-	public function has(string $name): bool
+	final public function has(string $name): bool
 	{
 		return isset($this->definitions[$name]);
 	}
@@ -77,7 +82,7 @@ class ItemOptionDefinitionBag implements GenericBag
 	/**
 	 * @inheritDoc
 	 */
-	public function get(string $name): ?ItemOptionDefinition
+	final public function get(string $name): ?ItemOptionDefinition
 	{
 		if( isset($this->definitions[$name]) ) {
 			return $this->definitions[$name];
@@ -89,7 +94,7 @@ class ItemOptionDefinitionBag implements GenericBag
 	/**
 	 * @inheritDoc
 	 */
-	public function all(): array
+	final public function all(): array
 	{
 		return $this->definitions;
 	}
@@ -97,32 +102,32 @@ class ItemOptionDefinitionBag implements GenericBag
 	/**
 	 * @inheritDoc
 	 */
-	public function isEmpty(): bool
+	final public function isEmpty(): bool
 	{
 		return count($this->definitions) === 0;
 	}
 
-	public function rewind(): void
+	final public function rewind(): void
 	{
 		reset($this->definitions);
 	}
 
-	public function current(): mixed
+	final public function current(): mixed
 	{
 		return current($this->definitions);
 	}
 
-	public function key(): mixed
+	final public function key(): mixed
 	{
 		return key($this->definitions);
 	}
 
-	public function next(): void
+	final public function next(): void
 	{
 		next($this->definitions);
 	}
 
-	public function valid(): bool
+	final public function valid(): bool
 	{
 		return key($this->definitions) !== null;
 	}

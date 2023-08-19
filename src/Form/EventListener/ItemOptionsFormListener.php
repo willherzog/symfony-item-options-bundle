@@ -2,7 +2,7 @@
 
 namespace WHSymfony\WHItemOptionsBundle\Form\EventListener;
 
-use InvalidArgumentException, LogicException;
+use InvalidArgumentException,LogicException;
 
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Form\FormInterface;
@@ -10,9 +10,8 @@ use Symfony\Component\Form\{FormEvent,FormEvents};
 use Symfony\Component\OptionsResolver\OptionsResolver;
 
 use WHPHP\Util\ArrayUtil;
-use WHDoctrine\Entity\KeyValueInterface;
 
-use WHSymfony\WHItemOptionsBundle\Config\ItemOptionDefinitionBag;
+use WHSymfony\WHItemOptionsBundle\Config\ItemOptionConfigurationManager;
 use WHSymfony\WHItemOptionsBundle\Entity\ItemWithOptions;
 
 /**
@@ -22,7 +21,6 @@ use WHSymfony\WHItemOptionsBundle\Entity\ItemWithOptions;
  */
 class ItemOptionsFormListener implements EventSubscriberInterface
 {
-	protected ?string $optionClass;
 	protected $optionHostItem;
 
 	protected OptionsResolver $configResolver;
@@ -42,14 +40,8 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 	/**
 	 * Create the event subscriber: set option entity class and, if needed, override the method for retrieving the item host from the event object.
 	 */
-	public function __construct(?string $optionClass = null, callable $optionHostItem = null)
+	public function __construct(callable $optionHostItem = null)
 	{
-		if( $optionClass !== null && !in_array(KeyValueInterface::class, class_implements($optionClass), true) ) {
-			throw new InvalidArgumentException(sprintf('$optionClass must implement "%s".', KeyValueInterface::class));
-		}
-
-		$this->optionClass = $optionClass;
-
 		if( $optionHostItem !== null ) {
 			$this->optionHostItem = $optionHostItem;
 		} else {
@@ -103,7 +95,6 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 		}
 
 		$optionHostItemClass = get_class($item);
-		/** @var ItemOptionDefinitionBag */
 		$optionDefinitions = $optionHostItemClass::getOptionDefinitions();
 
 		foreach( $this->optionsConfig as $optionName => $optionConfig ) {
@@ -146,12 +137,7 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 		}
 
 		$optionHostItemClass = get_class($item);
-		/** @var ItemOptionDefinitionBag */
 		$optionDefinitions = $optionHostItemClass::getOptionDefinitions();
-
-		if( $this->optionClass === null ) {
-			$this->optionClass = $optionHostItemClass::getOptionClass();
-		}
 
 		foreach( $this->optionsConfig as $optionName => $optionConfig ) {
 			if( !$optionDefinitions->has($optionName) ) {
@@ -235,12 +221,13 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 		return null;
 	}
 
-	protected function createAndAddItemOption(ItemWithOptions $item, string $name, mixed $value): void
+	protected function createAndAddItemOption(ItemWithOptions $item, string $key, mixed $value): void
 	{
-		$option = new $this->optionClass();
+		$optionClass = $item::getOptionClass();
+		$option = new $optionClass();
 
 		$option
-			->setKey($name)
+			->setKey($key)
 			->setValue($value)
 		;
 
