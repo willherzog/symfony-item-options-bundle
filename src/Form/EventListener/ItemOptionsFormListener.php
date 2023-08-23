@@ -7,25 +7,19 @@ use InvalidArgumentException,LogicException;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Form\FormInterface;
 use Symfony\Component\Form\{FormEvent,FormEvents};
-use Symfony\Component\OptionsResolver\OptionsResolver;
 
 use WHPHP\Util\ArrayUtil;
 
-use WHSymfony\WHItemOptionsBundle\Config\ItemOptionConfigurationManager;
 use WHSymfony\WHItemOptionsBundle\Entity\ItemWithOptions;
 
 /**
  * An event subscriber for populating the data of item options within forms.
+ * Do not add this directly to a form: use the "item_option" form option on individual fields.
  *
  * @author Will Herzog <willherzog@gmail.com>
  */
 class ItemOptionsFormListener implements EventSubscriberInterface
 {
-	protected $optionHostItem;
-
-	protected OptionsResolver $configResolver;
-	protected array $optionsConfig = [];
-
 	/**
 	 * @inheritDoc
 	 */
@@ -37,188 +31,107 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 		];
 	}
 
-	/**
-	 * Create the event subscriber: set option entity class and, if needed, override the method for retrieving the item host from the event object.
-	 */
-	public function __construct(callable $optionHostItem = null)
+	protected function getItemFromFormData(FormInterface $form): ItemWithOptions
 	{
-		if( $optionHostItem !== null ) {
-			$this->optionHostItem = $optionHostItem;
-		} else {
-			$this->optionHostItem = fn(FormEvent $event) => $event->getData();
+		if( $form->isRoot() ) {
+			throw new LogicException('The "item_option" form option is not supported on a root form.');
 		}
 
-		$resolver = new OptionsResolver();
+		while( null !== $form = $form->getParent() ) {
+			$dataClassValue = $form->getConfig()->getDataClass();
 
-		$resolver
-			->setDefaults([
-				'field' => null, // if different from option name
-				'parent' => null, // if not main form
-			])
-			->setAllowedTypes('field', ['null','string'])
-			->setAllowedTypes('parent', ['null','string'])
-		;
-
-		$this->configResolver = $resolver;
-	}
-
-	/**
-	 * Configure a form field to be associated with an item option.
-	 *
-	 * @throws InvalidArgumentException If called with duplicate $optionName
-	 */
-	public function addOptionField(string $optionName, array $config = []): static
-	{
-		if( isset($this->optionsConfig[$optionName]) ) {
-			throw new InvalidArgumentException(sprintf('Field configuration for option "%s" has already been added.', $optionName));
+			if( $dataClassValue !== null && is_subclass_of($dataClassValue, ItemWithOptions::class) ) {
+				$dataObject = $form->getData();
+			}
 		}
 
-		$this->optionsConfig[$optionName] = $this->configResolver->resolve($config);
+		if( !isset($dataObject) ) {
+			throw new LogicException('A field with the "item_option" form option must have an ancestor with an instance of ItemWithOptions as its underlying data.');
+		} elseif( !($dataObject instanceof ItemWithOptions) ) { // in *theory* this should never happen, but just in case...
+			throw new LogicException('The underlying form data is not an instance of ItemWithOptions even though the form\'s data class requires it to be.');
+		}
 
-		return $this;
+		return $dataObject;
 	}
 
-	/**
-	 * @internal
-	 */
 	public function onPostSetData(FormEvent $event): void
 	{
-		$item = ($this->optionHostItem)($event);
-		$form = $event->getForm();
+		$formField = $event->getForm();
+		$optionName = $formField->getConfig()->getOption('item_option');
+		$hostItem = $this->getItemFromFormData($formField);
 
-		if( $item === null ) {
-			return;
+		if( !$hostItem::getOptionDefinitions()->has($optionName) ) {
+			throw new InvalidArgumentException(sprintf('Undefined option name "%s" for host item class "%s"', $optionName, get_class($hostItem)));
 		}
 
-		if( !($item instanceof ItemWithOptions) ) {
-			throw new LogicException(sprintf('The option host item must be an instance of %s', ItemWithOptions::class));
+		$optionDefinition = $hostItem::getOptionDefinitions()->get($optionName);
+
+		if( !$optionDefinition->hostItemMeetsRequirements($hostItem) ) {
+			throw new InvalidArgumentException(sprintf('Host item instance of class "%s" does not satisfy the requirements for option "%s"', get_class($hostItem), $optionName));
 		}
 
-		$optionHostItemClass = get_class($item);
-		$optionDefinitions = $optionHostItemClass::getOptionDefinitions();
-
-		foreach( $this->optionsConfig as $optionName => $optionConfig ) {
-			if( !$optionDefinitions->has($optionName) ) {
-				throw new \RuntimeException(sprintf('Undefined option name "%s" for host item class "%s"', $optionName, $optionHostItemClass));
-			}
-
-			$optionDefinition = $optionDefinitions->get($optionName);
-
-			if( !$optionDefinition->hostItemMeetsRequirements($item) ) {
-				throw new \UnexpectedValueException(sprintf('Host item instance of class "%s" does not satisfy the requirements for option "%s"', $optionHostItemClass, $optionName));
-			}
-
-			$field = $this->getFieldFromForm($form, $optionName, $optionConfig);
-
-			if( $field === null ) {
-				continue;
-			}
-
-			$value = $item->getOptionValue($optionName);
-
-			$field->setData($value);
-		}
+		$formField->setData($hostItem->getOptionValue($optionName));
 	}
 
-	/**
-	 * @internal
-	 */
 	public function onPostSubmit(FormEvent $event): void
 	{
-		$item = ($this->optionHostItem)($event);
-		$form = $event->getForm();
+		$formField = $event->getForm();
+		$optionName = $formField->getConfig()->getOption('item_option');
+		$hostItem = $this->getItemFromFormData($formField);
 
-		if( $item === null ) {
-			return;
+		if( !$hostItem::getOptionDefinitions()->has($optionName) ) {
+			throw new InvalidArgumentException(sprintf('Undefined option name "%s" for host item class "%s"', $optionName, get_class($hostItem)));
 		}
 
-		if( !($item instanceof ItemWithOptions) ) {
-			throw new LogicException(sprintf('The option host item must be an instance of %s', ItemWithOptions::class));
-		}
+		$optionDefinition = $hostItem::getOptionDefinitions()->get($optionName);
 
-		$optionHostItemClass = get_class($item);
-		$optionDefinitions = $optionHostItemClass::getOptionDefinitions();
+		if( $optionDefinition->persistWithMultipleRows() ) {
+			$options = $hostItem->getOption($optionName);
+			$values = $formField->getData();
 
-		foreach( $this->optionsConfig as $optionName => $optionConfig ) {
-			if( !$optionDefinitions->has($optionName) ) {
-				throw new \RuntimeException(sprintf('Undefined option name "%s" for host item class "%s"', $optionName, $optionHostItemClass));
+			if( $options !== null && !is_array($options) ) {
+				throw new LogicException(sprintf('Option "%s" is defined as being persisted with multiple rows but the previously persisted value is not an array.', $optionName));
 			}
 
-			$field = $this->getFieldFromForm($form, $optionName, $optionConfig);
-
-			if( $field === null ) {
-				continue;
+			if( $values !== null && !is_array($values) ) {
+				throw new LogicException(sprintf('Option "%s" is defined as being persisted with multiple rows but the value for the asociated form field is not an array.', $optionName));
 			}
 
-			$definition = $optionDefinitions->get($optionName);
+			if( is_array($values) && count($values) > 0 ) {
+				foreach( $options as $option ) {
+					$optionValue = $option->getValue();
 
-			if( $definition->persistWithMultipleRows() ) {
-				$options = $item->getOption($optionName);
-				$values = $field->getData();
-
-				if( $options !== null && !is_array($options) ) {
-					throw new LogicException(sprintf('Option "%s" is defined as being persisted with multiple rows but the previously persisted value is not an array.', $optionName));
+					if( in_array($optionValue, $values, true) ) {
+						ArrayUtil::removeValue($values, $optionValue);
+					} else {
+						$hostItem->removeOption($option);
+					}
 				}
 
-				if( $values !== null && !is_array($values) ) {
-					throw new LogicException(sprintf('Option "%s" is defined as being persisted with multiple rows but the value for the asociated form field is not an array.', $optionName));
-				}
-
-				if( is_array($values) && count($values) > 0 ) {
-					foreach( $options as $option ) {
-						$optionValue = $option->getValue();
-
-						if( in_array($optionValue, $values, true) ) {
-							ArrayUtil::removeValue($values, $optionValue);
-						} else {
-							$item->removeOption($option);
-						}
-					}
-
-					foreach( $values as $value ) {
-						if( $definition->shouldPersistValue($value) ) {
-							$this->createAndAddItemOption($item, $optionName, $value);
-						}
-					}
-				} else {
-					foreach( $options as $option ) {
-						$item->removeOption($option);
+				foreach( $values as $value ) {
+					if( $optionDefinition->shouldPersistValue($value) ) {
+						$this->createAndAddItemOption($hostItem, $optionName, $value);
 					}
 				}
 			} else {
-				$option = $item->getOption($optionName);
-				$value = $field->getData();
-
-				if( $definition->shouldPersistValue($value) ) {
-					if( $option === null ) {
-						$this->createAndAddItemOption($item, $optionName, $value);
-					} else {
-						$option->setValue($value);
-					}
-				} elseif( $option !== null ) {
-					$item->removeOption($option);
+				foreach( $options as $option ) {
+					$hostItem->removeOption($option);
 				}
 			}
-		}
-	}
-
-	protected function getFieldFromForm(FormInterface $form, string $optionName, array $optionConfig): ?FormInterface
-	{
-		$fieldName = $optionConfig['field'] ?? $optionName;
-
-		if( $optionConfig['parent'] ) {
-			if( $form->has($optionConfig['parent']) ) {
-				$parentForm = $form->get($optionConfig['parent']);
-			}
 		} else {
-			$parentForm = $form;
-		}
+			$option = $hostItem->getOption($optionName);
+			$value = $formField->getData();
 
-		if( isset($parentForm) && $parentForm->has($fieldName) ) {
-			return $parentForm->get($fieldName);
+			if( $optionDefinition->shouldPersistValue($value) ) {
+				if( $option === null ) {
+					$this->createAndAddItemOption($hostItem, $optionName, $value);
+				} else {
+					$option->setValue($value);
+				}
+			} elseif( $option !== null ) {
+				$hostItem->removeOption($option);
+			}
 		}
-
-		return null;
 	}
 
 	protected function createAndAddItemOption(ItemWithOptions $item, string $key, mixed $value): void
