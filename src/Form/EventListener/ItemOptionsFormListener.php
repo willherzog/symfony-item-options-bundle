@@ -57,8 +57,8 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 	public function onPostSetData(FormEvent $event): void
 	{
 		$formField = $event->getForm();
-		$optionName = $formField->getConfig()->getOption('item_option');
 		$hostItem = $this->getItemFromFormData($formField);
+		$optionName = $formField->getConfig()->getOption('item_option');
 
 		if( !$hostItem::getOptionDefinitions()->has($optionName) ) {
 			throw new InvalidArgumentException(sprintf('Undefined option name "%s" for host item class "%s"', $optionName, get_class($hostItem)));
@@ -70,14 +70,14 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 			throw new InvalidArgumentException(sprintf('Host item instance of class "%s" does not satisfy the requirements for option "%s"', get_class($hostItem), $optionName));
 		}
 
-		$formField->setData($hostItem->getOptionValue($optionName));
+		$event->setData($hostItem->getOptionValue($optionName));
 	}
 
 	public function onPostSubmit(FormEvent $event): void
 	{
 		$formField = $event->getForm();
-		$optionName = $formField->getConfig()->getOption('item_option');
 		$hostItem = $this->getItemFromFormData($formField);
+		$optionName = $formField->getConfig()->getOption('item_option');
 
 		if( !$hostItem::getOptionDefinitions()->has($optionName) ) {
 			throw new InvalidArgumentException(sprintf('Undefined option name "%s" for host item class "%s"', $optionName, get_class($hostItem)));
