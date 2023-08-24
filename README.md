@@ -1,5 +1,12 @@
 # Symfony Item Options Bundle
  A bundle to provide "item option" functionality for Doctrine entities within the Symfony framework.
+ These are functionally similar to Wordpress's "meta" tables: allowing additional data for an entity to be persisted without the need to add a dedicated database column for each "option".
+
+ To add item options, implement the ItemWithOptions interface with a Doctrine entity class and have it reference another entity class--this one implementing the ItemOption interface (I recommend using WHDoctrine\Entity\KeyValueTrait to facilitate this)--to be used for each of its options.
+
+ The option definitions themselves can just be an array of arrays (which you then use as the constructor argument for an instance of ItemOptionDefinitionBag); reference the ItemOptionDefinition class for the options available for use in each inner array (or if sticking with the defaults, simply specify the name of the item option as an anonymous string value in the outer array).
+
+ To update option values automatically within a Symfony form, use the "item_option" form option on each applicable field to specify the name of a defined item option with which it should be kept in sync (and make sure one of the field ancestors--usually the root form--has a Doctrine entity implementing ItemWithOptions as its underlying data).
 
 
 Installation
