@@ -26,7 +26,7 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 	static public function getSubscribedEvents(): array
 	{
 		return [
-			FormEvents::POST_SET_DATA => ['onPostSetData', 999], // This should always be called FIRST
+			FormEvents::PRE_SET_DATA => ['onPreSetData', 999], // This should always be called FIRST
 			FormEvents::POST_SUBMIT => ['onPostSubmit', -999] // This should always be called LAST
 		];
 	}
@@ -54,7 +54,7 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 		return $dataObject;
 	}
 
-	public function onPostSetData(FormEvent $event): void
+	public function onPreSetData(FormEvent $event): void
 	{
 		$formField = $event->getForm();
 		$hostItem = $this->getItemFromFormData($formField);
