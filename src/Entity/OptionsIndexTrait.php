@@ -4,6 +4,8 @@ namespace WHSymfony\WHItemOptionsBundle\Entity;
 
 use WHPHP\Util\ArrayUtil;
 
+use WHSymfony\WHItemOptionsBundle\Exception\InvalidMultipleOptionInstancesException;
+
 /**
  * An indexer for item options which allows retrieving the option values via key to minimize memory impact.
  * Intended to serve as the default implementation for the object instance methods required by ItemWithOptions.
@@ -42,7 +44,7 @@ trait OptionsIndexTrait
 			} elseif( is_array($this->optionsIndex[$key]) ) {
 				$this->optionsIndex[$key][] = $i;
 			} elseif( self::getOptionDefinitions()->has($key) && !self::getOptionDefinitions()->get($key)->persistWithMultipleRows() ) {
-				throw new \UnexpectedValueException(sprintf('Found multiple instances of item option "%s" but its definition does not permit there to be more than one.', $key));
+				throw new InvalidMultipleOptionInstancesException($key);
 			} else {
 				// For backwards compatibility, convert existing index to array (i.e. if options with this key do not have an associated definition)
 				$this->optionsIndex[$key] = [$this->optionsIndex[$key], $i];
