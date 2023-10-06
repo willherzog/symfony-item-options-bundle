@@ -5,7 +5,7 @@ namespace WHSymfony\WHItemOptionsBundle\Form\Type;
 use Symfony\Component\Form\AbstractTypeExtension;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\Form\Extension\Core\Type\FormType;
-use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\OptionsResolver\{Options,OptionsResolver};
 
 use WHSymfony\WHItemOptionsBundle\Form\EventListener\ItemOptionsFormListener;
 
@@ -33,6 +33,14 @@ class FormTypeExtension extends AbstractTypeExtension
 			->default(null)
 			->info('Specify item option to use for persisting this form field\'s value. There must be an ancestor form with an instance of ItemWithOptions as its underlying data and that instance must have this item option defined.')
 		;
+
+		$resolver->setDefault('mapped', function (Options $options, bool $previousValue): bool {
+			if( $options['item_option'] !== null && $options['item_option'] !== '' ) {
+				return false;
+			}
+
+			return $previousValue;
+		});
 	}
 
 	/**
@@ -40,7 +48,7 @@ class FormTypeExtension extends AbstractTypeExtension
 	 */
 	public function buildForm(FormBuilderInterface $builder, array $options)
 	{
-		if( $options['item_option'] !== null ) {
+		if( $options['item_option'] !== null && $options['item_option'] !== '' ) {
 			$builder->addEventSubscriber(new ItemOptionsFormListener());
 		}
 	}
