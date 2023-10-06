@@ -37,7 +37,7 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 			throw new LogicException('The "item_option" form option is not supported on a root form.');
 		}
 
-		while( null !== $form = $form->getParent() ) {
+		while( ($form = $form->getParent()) !== null ) {
 			$dataClassValue = $form->getConfig()->getDataClass();
 
 			if( $dataClassValue !== null && is_subclass_of($dataClassValue, ItemWithOptions::class) ) {
