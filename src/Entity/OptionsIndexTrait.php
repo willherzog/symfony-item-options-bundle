@@ -118,6 +118,8 @@ trait OptionsIndexTrait
 			$option->setKey($key);
 			$this->addOption($option);
 
+			$this->optionsIndex = null;
+
 			return $option;
 		}
 
