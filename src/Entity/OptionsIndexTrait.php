@@ -61,7 +61,7 @@ trait OptionsIndexTrait
 	}
 
 	/**
-	 * Determine whether option(s) with the specified key exist.
+	 * @inheritDoc
 	 */
 	final public function hasOption(string $key): bool
 	{
@@ -87,11 +87,9 @@ trait OptionsIndexTrait
 	}
 
 	/**
-	 * Get the option or options (if any) with the specified key (otherwise NULL).
-	 *
-	 * @return null|ItemOption|ItemOption[]
+	 * @inheritDoc
 	 */
-	final public function getOption(string $key): null|array|ItemOption
+	final public function getOption(string $key, bool $createIfNotFound = false): null|array|ItemOption
 	{
 		if( $this->optionsIndex === null ) {
 			$this->createOptionsIndex();
@@ -99,28 +97,33 @@ trait OptionsIndexTrait
 
 		$optionsProperty = $this->getOptionsProperty();
 
-		if( !isset($this->optionsIndex[$key]) ) {
-			return null;
-		} elseif( is_array($this->optionsIndex[$key]) ) {
-			$optionsForKey = [];
+		if( isset($this->optionsIndex[$key]) ) {
+			if( is_array($this->optionsIndex[$key]) ) {
+				$optionsForKey = [];
 
-			foreach( $this->optionsIndex[$key] as $i ) {
-				$optionsForKey[] = $this->$optionsProperty->get($i);
+				foreach( $this->optionsIndex[$key] as $i ) {
+					$optionsForKey[] = $this->$optionsProperty->get($i);
+				}
+
+				return $optionsForKey;
+			} else {
+				$i = $this->optionsIndex[$key];
+
+				return $this->$optionsProperty->get($i);
 			}
+		} elseif( $createIfNotFound ) {
+			$optionClass = static::getOptionClass();
+			$option = new $optionClass();
 
-			return $optionsForKey;
-		} else {
-			$i = $this->optionsIndex[$key];
-
-			return $this->$optionsProperty->get($i);
+			$option->setKey($key);
+			$this->addOption($option);
 		}
+
+		return null;
 	}
 
 	/**
-	 * Get option value(s).
-	 *
-	 * @param string $key The option key
-	 * @param mixed $fallback Value returned if the key is not found; if NULL (the default), will use default value from option definition (when available)
+	 * @inheritDoc
 	 */
 	final public function getOptionValue(string $key, mixed $fallback = null): mixed
 	{
