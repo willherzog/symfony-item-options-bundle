@@ -42,6 +42,7 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 
 			if( $dataClassValue !== null && is_subclass_of($dataClassValue, ItemWithOptions::class) ) {
 				$dataObject = $form->getData();
+				break;
 			}
 		}
 
