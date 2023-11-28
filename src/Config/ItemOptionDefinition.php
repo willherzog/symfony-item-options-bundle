@@ -96,21 +96,23 @@ class ItemOptionDefinition
 
 	public function shouldPersistValue(mixed $value): bool
 	{
+		$checkDefault = function ($value): bool {
+			$defaultValue = $this->getDefaultValue();
+
+			if( !empty($defaultValue) && $value === $defaultValue ) {
+				return $this->config['persist_default'];
+			}
+
+			return true;
+		};
+
 		return match($value) {
 			[] => $this->config['allow_empty_array'],
 			'' => $this->config['allow_empty_string'],
 			0, 0.0 => $this->config['allow_zero'],
 			false => $this->config['allow_false'],
 			null => $this->config['allow_null'],
-			default => function () use ($value): bool {
-				$defaultValue = $this->getDefaultValue();
-
-				if( !empty($defaultValue) && $value === $defaultValue ) {
-					return $this->config['persist_default'];
-				}
-
-				return true;
-			}
+			default => $checkDefault($value)
 		};
 	}
 }
