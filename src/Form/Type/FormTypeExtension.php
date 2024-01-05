@@ -46,7 +46,7 @@ class FormTypeExtension extends AbstractTypeExtension
 	/**
 	 * @inheritDoc
 	 */
-	public function buildForm(FormBuilderInterface $builder, array $options)
+	public function buildForm(FormBuilderInterface $builder, array $options): void
 	{
 		if( $options['item_option'] !== null && $options['item_option'] !== '' ) {
 			$builder->addEventSubscriber(new ItemOptionsFormListener());
