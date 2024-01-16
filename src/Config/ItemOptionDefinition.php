@@ -11,9 +11,9 @@ use WHSymfony\WHItemOptionsBundle\Entity\ItemWithOptions;
  *
  * @author Will Herzog <willherzog@gmail.com>
  */
-class ItemOptionDefinition
+final class ItemOptionDefinition
 {
-	protected readonly array $config;
+	private readonly array $config;
 
 	public function __construct(array $unresolvedConfig)
 	{
