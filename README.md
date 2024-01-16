@@ -8,6 +8,8 @@
 
  To update option values automatically within a Symfony form, use the `item_option` form option on each applicable field to specify the name of a defined item option with which it should be kept in sync (and make sure one of the field ancestors—usually the root form—has a Doctrine entity implementing `ItemWithOptions` as its underlying data).
 
+ Note: My recommended best practice (for code maintainability) is to reference public constants on your `ItemOption` entity class(es) for each of the option keys.
+
 
 Installation
 ============
