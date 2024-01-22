@@ -141,7 +141,7 @@ trait OptionsIndexTrait
 			if( $fallback === null ) {
 				$definition = self::getOptionDefinitions()->get($key);
 
-				return $definition !== null ? $definition->getDefaultValue() : $fallback;
+				return $definition?->getDefaultValue() ?? $fallback;
 			} else {
 				return $fallback;
 			}
