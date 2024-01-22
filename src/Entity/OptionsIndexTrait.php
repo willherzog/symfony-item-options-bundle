@@ -34,8 +34,12 @@ trait OptionsIndexTrait
 	{
 		$this->optionsIndex = [];
 
+		assert($this->{$this->getOptionsProperty()} instanceof Collection);
+
 		/** @var ItemOption $option */
 		foreach( $this->{$this->getOptionsProperty()} as $i => $option ) {
+			assert($option instanceof ItemOption);
+
 			$key = $option->getKey();
 
 			if( !isset($this->optionsIndex[$key]) ) {
