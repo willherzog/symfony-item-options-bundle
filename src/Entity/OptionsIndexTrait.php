@@ -2,9 +2,12 @@
 
 namespace WHSymfony\WHItemOptionsBundle\Entity;
 
+use Doctrine\Common\Collections\Collection;
+
 use WHPHP\Util\ArrayUtil;
 
 use WHSymfony\WHItemOptionsBundle\Exception\InvalidMultipleOptionInstancesException;
+use WHSymfony\WHItemOptionsBundle\Exception\MissingOptionInstanceException;
 
 /**
  * An indexer for item options which allows retrieving the option values via key to minimize memory impact.
@@ -52,6 +55,18 @@ trait OptionsIndexTrait
 		}
 	}
 
+	final private function getOptionInstance(string $key, int $index): ItemOption
+	{
+		/** @var Collection|ItemOption[] */
+		$optionsCollection = $this->{$this->getOptionsProperty()};
+
+		if( $optionsCollection->containsKey($index) ) {
+			return $optionsCollection->get($index);
+		}
+
+		throw new MissingOptionInstanceException($key, $index);
+	}
+
 	/**
 	 * This method should be called whenever the contents of the options property are modified (e.g. when adding or removing options).
 	 */
@@ -95,21 +110,19 @@ trait OptionsIndexTrait
 			$this->createOptionsIndex();
 		}
 
-		$optionsProperty = $this->getOptionsProperty();
-
 		if( isset($this->optionsIndex[$key]) ) {
 			if( is_array($this->optionsIndex[$key]) ) {
 				$optionsForKey = [];
 
-				foreach( $this->optionsIndex[$key] as $i ) {
-					$optionsForKey[] = $this->$optionsProperty->get($i);
+				foreach( $this->optionsIndex[$key] as $index ) {
+					$optionsForKey[] = $this->getOptionInstance($key, $index);
 				}
 
 				return $optionsForKey;
 			} else {
-				$i = $this->optionsIndex[$key];
+				$index = $this->optionsIndex[$key];
 
-				return $this->$optionsProperty->get($i);
+				return $this->getOptionInstance($key, $index);
 			}
 		} elseif( $createIfNotFound ) {
 			$optionClass = static::getOptionClass();
@@ -135,28 +148,28 @@ trait OptionsIndexTrait
 			$this->createOptionsIndex();
 		}
 
-		$optionsProperty = $this->getOptionsProperty();
+		if( isset($this->optionsIndex[$key]) ) {
+			if( is_array($this->optionsIndex[$key]) ) {
+				$valuesForKey = [];
 
-		if( !isset($this->optionsIndex[$key]) ) {
-			if( $fallback === null ) {
-				$definition = self::getOptionDefinitions()->get($key);
+				foreach( $this->optionsIndex[$key] as $index ) {
+					$valuesForKey[] = $this->getOptionInstance($key, $index)->getValue();
+				}
 
-				return $definition?->getDefaultValue() ?? $fallback;
+				return $valuesForKey;
 			} else {
-				return $fallback;
+				$index = $this->optionsIndex[$key];
+
+				return $this->getOptionInstance($key, $index)->getValue();
 			}
-		} elseif( is_array($this->optionsIndex[$key]) ) {
-			$valuesForKey = [];
-
-			foreach( $this->optionsIndex[$key] as $i ) {
-				$valuesForKey[] = $this->$optionsProperty->get($i)->getValue();
-			}
-
-			return $valuesForKey;
-		} else {
-			$i = $this->optionsIndex[$key];
-
-			return $this->$optionsProperty->get($i)->getValue();
 		}
+
+		if( $fallback === null ) {
+			$definition = self::getOptionDefinitions()->get($key);
+
+			return $definition?->getDefaultValue() ?? $fallback;
+		}
+
+		return $fallback;
 	}
 }
