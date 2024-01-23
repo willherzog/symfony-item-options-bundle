@@ -59,7 +59,7 @@ trait OptionsIndexTrait
 		}
 	}
 
-	final private function getOptionInstance(string $key, int $index): ItemOption
+	final protected function getOptionInstance(string $key, int $index): ItemOption
 	{
 		/** @var Collection|ItemOption[] */
 		$optionsCollection = $this->{$this->getOptionsProperty()};
