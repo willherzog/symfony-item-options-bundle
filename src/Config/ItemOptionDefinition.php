@@ -89,7 +89,9 @@ final class ItemOptionDefinition
 				throw new InvalidOptionsException(sprintf('The option "enum_type" with value %s is expected to be the FQCN for a backed enum, but either no such enum exists or it is not a backed enum.', $resolvedConfig['enum_type']));
 			}
 
-			if( $resolvedConfig['default'] !== null && $enumType::tryFrom($resolvedConfig['default']) === null ) {
+			$defaultValue = $resolvedConfig['default'];
+
+			if( $defaultValue !== null && (!($defaultValue instanceof \BackedEnum) || $enumType::tryFrom($defaultValue->value) === null) ) {
 				throw new InvalidOptionsException(sprintf('When the option "enum_type" is not NULL, the option "default" with value %s must either be NULL or the scalar equivalent for a case of the PHP enumerator referenced by the "enum_type" option.', $resolvedConfig['default']));
 			}
 		}
