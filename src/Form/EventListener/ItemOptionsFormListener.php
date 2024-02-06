@@ -102,6 +102,8 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 				foreach( $options as $option ) {
 					$optionValue = $option->getValue();
 
+					$optionDefinition->deNormalizeValue($optionValue);
+
 					if( in_array($optionValue, $values, true) ) {
 						ArrayUtil::removeValue($values, $optionValue);
 					} else {
@@ -111,6 +113,8 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 
 				foreach( $values as $value ) {
 					if( $optionDefinition->shouldPersistValue($value) ) {
+						$optionDefinition->normalizeValue($value);
+
 						$this->createAndAddItemOption($hostItem, $optionName, $value);
 					}
 				}
@@ -124,6 +128,8 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 			$value = $formField->getData();
 
 			if( $optionDefinition->shouldPersistValue($value) ) {
+				$optionDefinition->normalizeValue($value);
+
 				if( $option === null ) {
 					$this->createAndAddItemOption($hostItem, $optionName, $value);
 				} else {

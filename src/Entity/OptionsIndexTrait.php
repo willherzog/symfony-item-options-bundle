@@ -153,18 +153,31 @@ trait OptionsIndexTrait
 		}
 
 		if( isset($this->optionsIndex[$key]) ) {
+			$definition = self::getOptionDefinitions()->get($key);
+
 			if( is_array($this->optionsIndex[$key]) ) {
 				$valuesForKey = [];
 
 				foreach( $this->optionsIndex[$key] as $index ) {
-					$valuesForKey[] = $this->getOptionInstance($key, $index)->getValue();
+					$value = $this->getOptionInstance($key, $index)->getValue();
+
+					if( $definition !== null ) {
+						$definition->deNormalizeValue($value);
+					}
+
+					$valuesForKey[] = $value;
 				}
 
 				return $valuesForKey;
 			} else {
 				$index = $this->optionsIndex[$key];
+				$value = $this->getOptionInstance($key, $index)->getValue();
 
-				return $this->getOptionInstance($key, $index)->getValue();
+				if( $definition !== null ) {
+					$definition->deNormalizeValue($value);
+				}
+
+				return $value;
 			}
 		}
 

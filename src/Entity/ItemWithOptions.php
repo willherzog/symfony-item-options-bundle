@@ -45,11 +45,13 @@ interface ItemWithOptions
 	 *
 	 * @param string $key The option key
 	 * @param bool $createIfNotFound Whether to automatically create (and return) an option instance with the specified key when none yet exists
+	 *
+	 * @return ItemOption|ItemOption[]|null
 	 */
 	public function getOption(string $key, bool $createIfNotFound = false): null|array|ItemOption;
 
 	/**
-	 * Get option value(s).
+	 * Get option value(s). This should be the preferred method to use when not needing to interact with the option entities themselves.
 	 *
 	 * @param string $key The option key
 	 * @param mixed $fallback Value returned if the key is not found; if NULL (the default), will use default value from option definition (when available)
