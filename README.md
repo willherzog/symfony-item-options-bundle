@@ -49,6 +49,6 @@ in the `config/bundles.php` file of your project:
 
 return [
     // ...
-    WHSymfony\WHFormBundle\WHItemOptionsBundle::class => ['all' => true],
+    WHSymfony\WHItemOptionsBundle\WHItemOptionsBundle::class => ['all' => true],
 ];
 ```
