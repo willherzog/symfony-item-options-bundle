@@ -99,7 +99,7 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 			}
 
 			if( is_array($values) && count($values) > 0 ) {
-				foreach( $options as $option ) {
+				foreach( $options ?? [] as $option ) {
 					$optionValue = $option->getValue();
 
 					$optionDefinition->deNormalizeValue($optionValue);
@@ -119,7 +119,7 @@ class ItemOptionsFormListener implements EventSubscriberInterface
 					}
 				}
 			} else {
-				foreach( $options as $option ) {
+				foreach( $options ?? [] as $option ) {
 					$hostItem->removeOption($option);
 				}
 			}
