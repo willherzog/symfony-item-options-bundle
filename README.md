@@ -236,7 +236,9 @@ use App\Entity\{ExampleItem,ExampleItemOption};
 // ...
 
 /** @var ExampleItem $item */
+
 if( $item->hasOption(ExampleItemOption::OPTION_EXAMPLE_B) ) {
+    /** @var ExampleItemOption */
     $optionEntity = $item->getOption(ExampleItemOption::OPTION_EXAMPLE_B);
     // ->getOption() returns NULL if the option has not been persisted
 }
