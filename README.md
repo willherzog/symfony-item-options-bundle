@@ -1,6 +1,6 @@
 # WHItemOptionsBundle
  A bundle to provide “item option” functionality for Doctrine entities within the Symfony framework.
- These are functionally similar to Wordpress’s “meta” tables: allowing additional data for an entity to be persisted without the need to add a dedicated database column for each “option”.
+ These are functionally similar to Wordpress’s “meta” tables: allowing additional data for an entity (the “item”) to be persisted without the need to add a dedicated database column for each “option”.
 
  To add item options, implement the `ItemWithOptions` interface with a Doctrine entity class and have it reference another entity class—this one implementing the `ItemOption` interface (I recommend using `WHDoctrine\Entity\KeyValueTrait` to facilitate this)—to be used for each of its options.
 
