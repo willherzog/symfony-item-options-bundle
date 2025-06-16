@@ -242,7 +242,7 @@ if( $item->hasOption(ExampleItemOption::OPTION_EXAMPLE_B) ) {
 }
 
 $optionValue = $item->getOptionValue(ExampleItemOption::OPTION_EXAMPLE_B);
-// When OptionsIndexTrait is used and a "default" value has been set (as is the case for this option in the item class above), ->getOptionValue() will return that default if the  option has not been persisted
+// When OptionsIndexTrait is used and a "default" value has been set (as is the case for this option in the item class above), ->getOptionValue() will return that default if the option has not been persisted
 // Alternatively, you can use the second argument of ->getOptionValue() to set a different default value
 ```
 
