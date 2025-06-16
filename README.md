@@ -107,7 +107,7 @@ class ExampleItem implements ItemWithOptions
 
     /* (additional properties...) */
 
-    #[ORM\OneToMany(targetEntity: ExampleItemOption::class, mappedBy: 'item', cascade: ['persist', 'remove'], orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: ExampleItemOption::class, mappedBy: 'item', cascade: ['persist', 'remove'], orphanRemoval: true, fetch: 'EAGER')]
     private Collection $options;
 
     static public function getOptionClass(): string
@@ -210,7 +210,7 @@ class ExampleItemType extends AbstractForm
             ])
             ->add('option_example_b', TextType::class, [
                 'item_option' => ExampleItemOption::OPTION_EXAMPLE_B,
-                'required' => false, // Since this field is not required, if the user does not submit a value, the above "default" value will be used
+                'required' => false, // Since this field is not required, if the user does not submit a value, the above "default" value will be returned by calls to OptionsIndexTrait::getOptionValue()
                 'label' => 'Example Option B'
             ])
             ->add('option_example_c', EnumType::class, [
@@ -226,6 +226,24 @@ class ExampleItemType extends AbstractForm
         $resolver->setDefault('data_class', ExampleItem::class);
     }
 }
+```
+
+### Accessing Item Options
+
+```php
+use App\Entity\{ExampleItem,ExampleItemOption};
+
+// ...
+
+/** @var ExampleItem $item */
+if( $item->hasOption(ExampleItemOption::OPTION_EXAMPLE_B) ) {
+    $optionEntity = $item->getOption(ExampleItemOption::OPTION_EXAMPLE_B);
+    // ->getOption() returns NULL if the option has not been persisted
+}
+
+$optionValue = $item->getOptionValue(ExampleItemOption::OPTION_EXAMPLE_B);
+// When OptionsIndexTrait is used and a "default" value has been set (as is the case for this option in the item class above), ->getOptionValue() will return that default if the  option has not been persisted
+// Alternatively, you can use the second argument of ->getOptionValue() to set a different default value
 ```
 
 ## Installation
