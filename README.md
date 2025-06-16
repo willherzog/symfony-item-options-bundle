@@ -29,7 +29,7 @@ class ExampleItemOption implements ItemOption
 {
     use KeyValueTrait; // Using this trait adds the "key" and "value" properties required by the ItemOption interface
 
-    // These constants will be referenced in the subsequent classes
+    // These constants will be referenced in the subsequent classes; the value of each constant will be used for the option's "key" property
     public const OPTION_EXAMPLE_A = 'example_a';
     public const OPTION_EXAMPLE_B = 'example_b';
     public const OPTION_EXAMPLE_C = 'example_c';
