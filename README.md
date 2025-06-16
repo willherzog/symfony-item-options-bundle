@@ -214,7 +214,7 @@ class ExampleItemType extends AbstractForm
                 'label' => 'Example Option B'
             ])
             ->add('option_example_c', EnumType::class, [
-                'item_option' => ExampleItemOption::OPTION_EXAMPLE_B,
+                'item_option' => ExampleItemOption::OPTION_EXAMPLE_C,
                 'class' => ExampleEnum::class, // The same enumerator specified for "enum_type" above
                 'label' => 'Example Option C'
             ])
